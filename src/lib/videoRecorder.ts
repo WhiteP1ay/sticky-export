@@ -85,8 +85,11 @@ export async function recordTgsToVideo(
       compositeCtx.drawImage(canvas, 0, 0)
     }
     
+    // 使用 TGS 动画的原始帧率
+    const originalFrameRate = parsed.data.fr || settings.frameRate
+    
     // 使用合成后的 canvas 捕获视频流
-    const stream = compositeCanvas.captureStream(settings.frameRate)
+    const stream = compositeCanvas.captureStream(originalFrameRate)
     if (!stream) {
       throw new Error('当前浏览器不支持从 canvas 捕获视频流')
     }
@@ -98,7 +101,7 @@ export async function recordTgsToVideo(
         compositeCtx.fillRect(0, 0, compositeCanvas.width, compositeCanvas.height)
         compositeCtx.drawImage(canvas, 0, 0)
       }
-    }, 1000 / settings.frameRate)
+    }, 1000 / originalFrameRate)
 
     // 根据设置的格式选择合适的 MIME 类型
     const mimeTypes = settings.format === 'mp4' 
@@ -204,8 +207,9 @@ async function createGifFromCanvas(
   const canvasWidth = canvas.width
   const canvasHeight = canvas.height
   
-  // 计算合理的帧数和延迟
-  const targetFps = Math.min(settings.frameRate, 30) // 限制最大帧率为 30fps，平衡质量和性能
+  // 使用 TGS 动画的原始帧率
+  const originalFrameRate = parsed.data.fr || settings.frameRate
+  const targetFps = Math.min(originalFrameRate, 30) // 限制最大帧率为 30fps，平衡质量和性能
   const totalFramesNeeded = Math.ceil((parsed.durationMs * targetFps) / 1000)
   const maxFrames = Math.min(totalFramesNeeded, 120) // 最大 120 帧，确保能捕获完整动画
   const frameCount = maxFrames
@@ -219,7 +223,7 @@ async function createGifFromCanvas(
     // 等待一小段时间，确保动画更新
     await new Promise(resolve => setTimeout(resolve, frameDelay / 2))
     
-    // 创建一个临时 canvas，用于应用背景色
+    // 创建一个临时 canvas，用于处理图像
     const tempCanvas = document.createElement('canvas')
     tempCanvas.width = canvasWidth
     tempCanvas.height = canvasHeight
@@ -229,32 +233,29 @@ async function createGifFromCanvas(
       throw new Error('无法获取 canvas 上下文')
     }
     
-    // 应用背景色
-    tempCtx.fillStyle = settings.backgroundColor
+    // 对于所有情况，先绘制白色背景，再绘制动画
+    // 这样可以确保动画主体的颜色（包括黑色）被正确保留
+    tempCtx.fillStyle = '#FFFFFF'
     tempCtx.fillRect(0, 0, canvasWidth, canvasHeight)
-    
-    // 绘制原始 canvas 内容
     tempCtx.drawImage(canvas, 0, 0)
     
     // 从临时 canvas 获取图像数据
     const imageData = tempCtx.getImageData(0, 0, canvasWidth, canvasHeight)
     
-    // 生成调色板（128 色，提高性能）
-    const palette = quantize(imageData.data, 128)
+    // 生成调色板（256 色，提高颜色精度）
+    const palette = quantize(imageData.data, 256)
     
     // 创建索引数据
     const index = applyPalette(imageData.data, palette)
     
-    // 确定是否使用透明背景
-    const useTransparent = settings.backgroundColor === 'transparent'
-    
     // 添加当前帧到 GIF 编码器
+    // 禁用透明度处理，确保所有颜色（包括黑色）都被正确保留
     encoder.writeFrame(index, canvasWidth, canvasHeight, {
       delay: frameDelay,
       palette: palette,
       repeat: 0, // 0 表示无限循环
-      transparent: useTransparent,
-      transparentIndex: useTransparent ? 0 : undefined // 假设第一个颜色是透明的
+      transparent: false,
+      transparentIndex: undefined
     })
   }
   

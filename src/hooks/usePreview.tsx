@@ -23,6 +23,9 @@ export function usePreview({ parsed }: UsePreviewParams) {
 
     // 清空旧内容
     container.innerHTML = ''
+    
+    // 设置容器背景色，确保与当前设置一致
+    container.style.background = settings.backgroundColor
 
     const animation = lottie.loadAnimation({
       container,
@@ -33,22 +36,43 @@ export function usePreview({ parsed }: UsePreviewParams) {
     })
 
     animationRef.current = animation
+    // 使用 requestAnimationFrame 延迟设置状态，避免在 useEffect 中同步调用 setState
+    requestAnimationFrame(() => {
+      setIsPlaying(true)
+    })
 
     return () => {
       animation.destroy()
       animationRef.current = null
     }
-  }, [parsed])
+  }, [parsed, settings.backgroundColor])
 
-  // 根据导出配置调整容器样式（背景色 + 分辨率）
+  // 设置预览窗口的固定尺寸和布局（只执行一次）
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    // 保持预览窗口尺寸固定为4:3比例
+    // 设置固定的4:3预览区域大小
+    const previewWidth = 640 // 4:3比例的宽度
+    const previewHeight = 480 // 4:3比例的高度
+    
+    // 设置容器的基础样式
+    container.style.width = `${previewWidth}px`
+    container.style.height = `${previewHeight}px`
+    container.style.display = 'flex'
+    container.style.alignItems = 'center'
+    container.style.justifyContent = 'center'
+    container.style.overflow = 'hidden'
+  }, []) // 空依赖数组，只执行一次
+
+  // 仅更新背景色，不影响尺寸和布局
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
     container.style.background = settings.backgroundColor
-    container.style.width = `${settings.width}px`
-    container.style.height = `${settings.height}px`
-  }, [settings.backgroundColor, settings.height, settings.width])
+  }, [settings.backgroundColor])
 
   const togglePlay = () => {
     const animation = animationRef.current

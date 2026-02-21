@@ -15,34 +15,6 @@ import { Label } from '../ui/label'
 export function SettingsPanel() {
   const { settings, updateSettings, reset } = useExportSettings()
 
-  const handleNumberChange =
-    (field: 'width' | 'height' | 'frameRate') =>
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      // 实时更新值，不做验证，允许用户自由输入
-      const value = event.target.value
-      // 暂时存储为字符串，在 onBlur 时进行验证
-      updateSettings({ [field]: Number(value) || 0 })
-    }
-
-  const handleNumberBlur =
-    (field: 'width' | 'height' | 'frameRate') =>
-    (event: React.FocusEvent<HTMLInputElement>) => {
-      // 输入结束后进行验证
-      const value = Number(event.target.value)
-      let validatedValue: number
-      
-      // 根据字段设置合理的默认值和范围
-      if (field === 'width' || field === 'height') {
-        validatedValue = Number.isFinite(value) && value > 0 ? Math.min(value, 4096) : 512
-      } else if (field === 'frameRate') {
-        validatedValue = Number.isFinite(value) && value > 0 ? Math.min(value, 300) : 30
-      } else {
-        validatedValue = 0
-      }
-      
-      updateSettings({ [field]: validatedValue })
-    }
-
   // 处理透明背景切换
   const handleTransparentToggle = () => {
     if (settings.backgroundColor === 'transparent') {
@@ -58,10 +30,27 @@ export function SettingsPanel() {
     updateSettings({ backgroundColor: event.target.value })
   }
 
+  // 为每种格式定义最佳配置
+  const getOptimalSettings = (format: 'json' | 'webm' | 'mp4' | 'gif') => {
+    switch (format) {
+      case 'gif':
+        return { width: 512, height: 512, frameRate: 20 } // GIF 平衡质量和文件大小
+      case 'mp4':
+        return { width: 512, height: 512, frameRate: 30 } // MP4 高质量
+      case 'webm':
+        return { width: 512, height: 512, frameRate: 30 } // WebM 高质量
+      case 'json':
+        return { width: 512, height: 512, frameRate: 30 } // JSON 保持原始质量
+      default:
+        return { width: 512, height: 512, frameRate: 30 }
+    }
+  }
+
   const handleFormatChange = (
     event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     const newFormat = event.target.value as 'json' | 'webm' | 'mp4' | 'gif'
+    const optimalSettings = getOptimalSettings(newFormat)
     
     // 检查是否切换到不支持透明背景的格式
     const supportsTransparent = newFormat === 'gif'
@@ -70,10 +59,14 @@ export function SettingsPanel() {
     if (!supportsTransparent && settings.backgroundColor === 'transparent') {
       updateSettings({ 
         format: newFormat,
-        backgroundColor: '#000000'
+        backgroundColor: '#000000',
+        ...optimalSettings
       })
     } else {
-      updateSettings({ format: newFormat })
+      updateSettings({ 
+        format: newFormat,
+        ...optimalSettings
+      })
     }
   }
 
@@ -85,67 +78,32 @@ export function SettingsPanel() {
       </CardHeader>
       <CardContent>
         <div className="space-y-3 text-xs">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="width">宽度（px）</Label>
+          <div className="space-y-1">
+            <Label htmlFor="backgroundColor">背景色</Label>
+            <div className="flex items-center gap-2">
               <Input
-                id="width"
-                type="number"
-                value={settings.width}
-                onChange={handleNumberChange('width')}
-                onBlur={handleNumberBlur('width')}
+                id="backgroundColor"
+                type="color"
+                className="h-8 w-10 p-0"
+                value={settings.backgroundColor === 'transparent' ? '#000000' : settings.backgroundColor}
+                onChange={handleBackgroundChange}
+                disabled={settings.backgroundColor === 'transparent'}
               />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="height">高度（px）</Label>
               <Input
-                id="height"
-                type="number"
-                value={settings.height}
-                onChange={handleNumberChange('height')}
-                onBlur={handleNumberBlur('height')}
+                type="text"
+                className="flex-1"
+                value={settings.backgroundColor}
+                onChange={handleBackgroundChange}
               />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-[1.5fr,1fr] items-end gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="frameRate">帧率（fps）</Label>
-              <Input
-                id="frameRate"
-                type="number"
-                value={settings.frameRate}
-                onChange={handleNumberChange('frameRate')}
-                onBlur={handleNumberBlur('frameRate')}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="backgroundColor">背景色</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="backgroundColor"
-                  type="color"
-                  className="h-8 w-10 p-0"
-                  value={settings.backgroundColor === 'transparent' ? '#000000' : settings.backgroundColor}
-                  onChange={handleBackgroundChange}
-                  disabled={settings.backgroundColor === 'transparent'}
-                />
-                <Input
-                  type="text"
-                  className="flex-1"
-                  value={settings.backgroundColor}
-                  onChange={handleBackgroundChange}
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={settings.backgroundColor === 'transparent' ? 'default' : 'ghost'}
-                  onClick={handleTransparentToggle}
-                  disabled={settings.format !== 'gif'}
-                >
-                  {settings.backgroundColor === 'transparent' ? '透明' : '透明'}
-                </Button>
-              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant={settings.backgroundColor === 'transparent' ? 'default' : 'ghost'}
+                onClick={handleTransparentToggle}
+                disabled={settings.format !== 'gif'}
+              >
+                {settings.backgroundColor === 'transparent' ? '透明' : '透明'}
+              </Button>
             </div>
           </div>
 
