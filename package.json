@@ -6,13 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "biome lint --write"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "fflate": "^0.8.2",
-    "gif.js.optimized": "^1.0.1",
     "gifenc": "^1.0.3",
     "lottie-web": "^5.13.0",
     "lucide-react": "^0.563.0",
@@ -22,6 +21,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.4",
     "@eslint/js": "^9.39.1",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^24.10.1",

@@ -23,16 +23,12 @@ declare module 'gifenc' {
     writeHeader(): void;
     writeFrame(index: Uint8Array, width: number, height: number, options?: WriteFrameOptions): void;
     get buffer(): ArrayBuffer;
-    get stream(): any;
+    get stream(): unknown;
   }
 
   function GIFEncoder(options?: GIFEncoderOptions): GifEncoder;
   function quantize(data: Uint8ClampedArray, maxColors: number): number[][];
   function applyPalette(data: Uint8ClampedArray, palette: number[][]): Uint8Array;
 
-  export {
-    GIFEncoder,
-    quantize,
-    applyPalette
-  };
+  export { GIFEncoder, quantize, applyPalette };
 }

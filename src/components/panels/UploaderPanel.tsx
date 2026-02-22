@@ -1,23 +1,18 @@
-import { useRef } from 'react'
-import { Upload } from 'lucide-react'
-import { Button } from '../ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../ui/card'
-import { useTgsFiles } from '../../hooks/useTgsFiles'
+/** biome-ignore-all lint/a11y/useKeyWithClickEvents: <todo> */
+/** biome-ignore-all lint/a11y/noStaticElementInteractions: <todo> */
+import { useRef } from 'react';
+import { Upload } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { useTgsFiles } from '../../hooks/useTgsFiles';
 
-/** 上传区域：负责接收单个/多个 .tgs 文件并交给 hooks 处理 */
 export function UploaderPanel() {
-  const inputRef = useRef<HTMLInputElement | null>(null)
-  const { handleInputFiles, handleDropFiles, handleDragOver } = useTgsFiles()
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const { handleInputFiles, handleDropFiles, handleDragOver } = useTgsFiles();
 
   const onClickSelect = () => {
-    inputRef.current?.click()
-  }
+    inputRef.current?.click();
+  };
 
   return (
     <Card>
@@ -34,18 +29,10 @@ export function UploaderPanel() {
         >
           <Upload className="h-5 w-5 text-sky-400" />
           <div className="space-y-1">
-            <p className="text-xs">
-              点击选择文件，或将 .tgs 文件拖拽到此处
-            </p>
-            <p className="text-[11px] text-slate-500">
-              文件仅在本地解析和导出，不会上传到服务器
-            </p>
+            <p className="text-xs">点击选择文件，或将 .tgs 文件拖拽到此处</p>
+            <p className="text-[11px] text-slate-500">文件仅在本地解析和导出，不会上传到服务器</p>
           </div>
-          <Button
-            type="button"
-            size="sm"
-            className="mt-2"
-          >
+          <Button type="button" size="sm" className="mt-2">
             选择 .tgs 文件
           </Button>
           <input
@@ -59,7 +46,5 @@ export function UploaderPanel() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
-
-
